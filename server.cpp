@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -8,8 +9,11 @@
 #include <unistd.h>
 
 #include "view.cpp"
+#include "utils.cpp"
 
-void loop_listen(int serverSocket, int bufsize, struct sockaddr_in server_addr) {
+View view;
+Utils utils;
+void connection_in_progress(int serverSocket, int bufsize, struct sockaddr_in server_addr) {
     char buffer[bufsize];
     strcpy(buffer, "Server connected");
     send(serverSocket, buffer, bufsize, 0);
@@ -20,14 +24,16 @@ void loop_listen(int serverSocket, int bufsize, struct sockaddr_in server_addr) 
         if(clientResponse == "exit") { // As this is only 1 to 1 Server/Client, it will stop when the serverSocket disconects.
             break;
         }
-        std::cout << "Client sent: " << buffer << std::endl;
+        view.received("Client sent: ", clientResponse);
 
-        std::cout << "Response: ";
+        view.send_message("Client");
         std::string responseString = "";
         char response[bufsize];
         getline(std::cin, responseString);
         strcpy (response, responseString.c_str());
 
+        std::string messageToLog = utils.create_log_format(responseString);
+        utils.save_to_file("server.log", messageToLog); // Saving response to server.log file
         send(serverSocket, response, bufsize, 0);
         if (responseString == "exit") {
             break;
@@ -35,15 +41,25 @@ void loop_listen(int serverSocket, int bufsize, struct sockaddr_in server_addr) 
     }
 }
 
-View view;
 int main() {
-
     int serverSocket;
-    int portNum = 1500;
-    int bufsize = 1024;
+    int portNum;
+    int bufsize;
+    std::ifstream infile("sis.config");
+    std::string line;
+    while (std::getline(infile, line)) {
+        std::size_t foundPortNum = line.find("portNum");
+        if (foundPortNum != std::string::npos) {
+            portNum = std::stoi(line.substr(8));
+        }                    
+        
+        std::size_t foundBufSize = line.find("bufSize");
+        if (foundBufSize != std::string::npos)
+            bufsize = std::stoi(line.substr(8));
+    }
 
     struct sockaddr_in server_addr;
-    socklen_t size;
+    socklen_t socketSize;
 
     serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket == -1) {
@@ -56,8 +72,9 @@ int main() {
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htons(INADDR_ANY);
     server_addr.sin_port = htons(portNum);
+    socketSize = sizeof(server_addr);
 
-    int bindResponse = bind(serverSocket, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    int bindResponse = bind(serverSocket, (struct sockaddr*)&server_addr, socketSize);
     if (bindResponse == -1) {
         view.bind_failure();
         exit(1);
@@ -66,15 +83,14 @@ int main() {
     view.listening_clients();
     listen(serverSocket, 1);
 
-    size = sizeof(server_addr);
-    serverSocket = accept(serverSocket, (struct sockaddr *)&server_addr, &size);
+    serverSocket = accept(serverSocket, (struct sockaddr *)&server_addr, &socketSize);
 
     view.conection_received();
 
     if (serverSocket == -1) 
         exit(1);
 
-    loop_listen(serverSocket, bufsize, server_addr);
+    connection_in_progress(serverSocket, bufsize, server_addr);
 
     view.server_goodbye(inet_ntoa(server_addr.sin_addr));
     close(serverSocket);

@@ -47,14 +47,11 @@ class View  {
         std::cout << "Successfully connected!" << std::endl;
     }
 
-    std::string get_response() {
-        std::cout << "Response: ";
-        std::string responseString;
-        getline(std::cin, responseString);
-        return responseString;
-    }
-
     void received(std::string side, std::string response) {
         std::cout << side << response << std::endl;
+    }
+
+    void send_message(std::string side) {
+        std::cout << "Send message to " << side << ": ";
     }
 };

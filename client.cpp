@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <chrono>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -9,12 +11,27 @@
 #include <netdb.h>
 
 #include "view.cpp"
+#include "utils.cpp"
 
 View view;
+Utils utils;
 int main() {
     int client;
-    int portNum = 1500;
-    int bufsize = 1024;
+
+    std::ifstream infile("sis.config");
+    std::string line;
+    int portNum;
+    int bufsize;
+    while (std::getline(infile, line)) {
+        std::size_t foundPortNum = line.find("portNum");
+        if (foundPortNum != std::string::npos)
+            portNum = std::stoi(line.substr(8));            
+        
+        std::size_t foundBufSize = line.find("bufSize");
+        if (foundBufSize != std::string::npos)
+            bufsize = std::stoi(line.substr(8));
+    }
+    
     char buffer[bufsize];
     struct sockaddr_in server_addr;
 
@@ -41,12 +58,15 @@ int main() {
     view.end_connection_tip();
 
     while(true) {
-        std::cout << "Send message to server: ";
+        view.send_message("Server");
         std::string responseString = "";
         char response[bufsize];
         getline(std::cin, responseString);
         strcpy (response, responseString.c_str());
         send(client, response, bufsize, 0);
+        
+        std::string messageToLog = utils.create_log_format(responseString);
+        utils.save_to_file("client.log", messageToLog);
         if (responseString == "exit") {
             break;
         }
@@ -57,7 +77,7 @@ int main() {
             break;
         }
 
-        std::cout << "Received: " << serverResponse << std::endl;
+        view.received("Server responded: ", serverResponse);
     }
 
     view.goodbye();
