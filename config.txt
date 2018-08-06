@@ -1,2 +1,0 @@
-portNum=1500
-bufSize=1024

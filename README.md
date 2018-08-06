@@ -1,26 +1,27 @@
 # TCPConnection
 
 Designed as an example of a simple socket connection through TCP.
+This project was developed and tested using Ubuntu 16.04 LTS.
 
 
 ## Getting Started
 
 * This project was developed exclusively using C++
 * To make use of it, clone/download this repository
+* The data will be stored in files called `client.log` and `server.log`. 
 
 
 ### Prerequisites
 
-JAVA JDK 8 must be installed beforehand.
-G++ Compiler
-Linux Enviroment
+ * G++ Compiler
+ * Linux Enviroment(Preferably Ubuntu 16.04)
 
 
 ### Installing
 
 * The first step will be cloning or downloading this repository.
 
-* Then configurate the file sis.config inside the config folder accordingly to the port number or buffer size as:
+* Then configurate the file `sis.config` inside the config folder accordingly to the port number or buffer size as:
 ```
 portNum=desiredPortNumber(int)
 bufSize=desiredBufferSize(int)
