@@ -1,0 +1,19 @@
+    std::ifstream infile("config.txt");
+    std::string line;
+    int portNum;
+    int bufsize;
+    while (std::getline(infile, line)) {
+        std::istringstream iss(line);
+
+        std::size_t foundPortNum = line.find("portNum");
+        if (foundPortNum != std::string::npos)
+            portNum = std::stoi(line.substr(8));            
+        
+            
+
+        std::size_t foundBufSize = line.find("bufSize");
+        if (foundBufSize != std::string::npos)
+            bufsize = std::stoi(line.substr(8));
+    }
+    
+    std::cout << "SERVER PORT: " << portNum;
